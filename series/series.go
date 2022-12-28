@@ -83,6 +83,11 @@ type boolElements []boolElement
 func (e boolElements) Len() int           { return len(e) }
 func (e boolElements) Elem(i int) Element { return &e[i] }
 
+type customElements []customElement
+
+func (e customElements) Len() int           { return len(e) }
+func (e customElements) Elem(i int) Element { return &e[i] }
+
 // ElementValue represents the value that can be used for marshaling or
 // unmarshaling Elements.
 type ElementValue interface{}
@@ -118,16 +123,17 @@ const (
 	Int    Type = "int"
 	Float  Type = "float"
 	Bool   Type = "bool"
+	Custom Type = "custom"
 )
 
 // Indexes represent the elements that can be used for selecting a subset of
 // elements within a Series. Currently supported are:
 //
-//     int            // Matches the given index number
-//     []int          // Matches all given index numbers
-//     []bool         // Matches all elements in a Series marked as true
-//     Series [Int]   // Same as []int
-//     Series [Bool]  // Same as []bool
+//	int            // Matches the given index number
+//	[]int          // Matches all given index numbers
+//	[]bool         // Matches all elements in a Series marked as true
+//	Series [Int]   // Same as []int
+//	Series [Bool]  // Same as []bool
 type Indexes interface{}
 
 // New is the generic Series constructor
@@ -148,6 +154,8 @@ func New(values interface{}, t Type, name string) Series {
 			ret.elements = make(floatElements, n)
 		case Bool:
 			ret.elements = make(boolElements, n)
+		case Custom:
+			ret.elements = make(customElements, n)
 		default:
 			panic(fmt.Sprintf("unknown type %v", t))
 		}
@@ -231,6 +239,10 @@ func Bools(values interface{}) Series {
 	return New(values, Bool, "")
 }
 
+func Customs(value interface{}) Series {
+	return New(value, Custom, "")
+}
+
 // Empty returns an empty Series of the same type
 func (s Series) Empty() Series {
 	return New([]int{}, s.t, s.Name)
@@ -257,6 +269,8 @@ func (s *Series) Append(values interface{}) {
 		s.elements = append(s.elements.(floatElements), news.elements.(floatElements)...)
 	case Bool:
 		s.elements = append(s.elements.(boolElements), news.elements.(boolElements)...)
+	case Custom:
+		s.elements = append(s.elements.(customElements), news.elements.(customElements)...)
 	}
 }
 
@@ -312,6 +326,12 @@ func (s Series) Subset(indexes Indexes) Series {
 		elements := make(boolElements, len(idx))
 		for k, i := range idx {
 			elements[k] = s.elements.(boolElements)[i]
+		}
+		ret.elements = elements
+	case Custom:
+		elements := make(customElements, len(idx))
+		for k, i := range idx {
+			elements[k] = s.elements.(customElements)[i]
 		}
 		ret.elements = elements
 	default:
@@ -490,6 +510,9 @@ func (s Series) Copy() Series {
 	case Int:
 		elements = make(intElements, s.Len())
 		copy(elements.(intElements), s.elements.(intElements))
+	case Custom:
+		elements = make(customElements, s.Len())
+		copy(elements.(customElements), s.elements.(customElements))
 	}
 	ret := Series{
 		Name:     name,

@@ -457,3 +457,48 @@ func ExampleDataFrame_Describe() {
 	//     <string> <string> <float>  <float>  <float>
 
 }
+
+type Dept struct {
+	ID      string
+	Name    string
+	SortVal int
+}
+
+func (d Dept) String() string {
+	return d.Name
+}
+
+func (d Dept) Sort() int {
+	return d.SortVal
+}
+
+func (d Dept) Value() interface{} {
+	return d.ID
+}
+
+func ExampleDataFrame_Custom() {
+	df := dataframe.LoadStructs(
+		[]Dept{
+			{"a", "develop", 1},
+			{"b", "design", 2},
+			{"c", "hr", 3},
+		},
+	)
+	df = df.Arrange(dataframe.RevSort("SortVal"))
+	fmt.Println(df)
+
+	// Output:
+	// [8x5] DataFrame
+	//
+	//     column   A        B        C        D
+	//  0: mean     -        3.250000 6.050000 0.500000
+	//  1: median   -        3.500000 6.000000 NaN
+	//  2: stddev   -        0.957427 0.818535 0.577350
+	//  3: min      a        2.000000 5.100000 0.000000
+	//  4: 25%      -        2.000000 5.100000 0.000000
+	//  5: 50%      -        3.000000 6.000000 0.000000
+	//  6: 75%      -        4.000000 6.000000 1.000000
+	//  7: max      c        4.000000 7.100000 1.000000
+	//     <string> <string> <float>  <float>  <float>
+
+}
